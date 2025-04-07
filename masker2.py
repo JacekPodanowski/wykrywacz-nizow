@@ -253,7 +253,7 @@ def main():
     """
     Main function to process weather map images
     """
-    input_folder = "Maps"
+    input_folder = "download"
     output_folder = "masks"
     process_maps_folder(input_folder, output_folder)
 

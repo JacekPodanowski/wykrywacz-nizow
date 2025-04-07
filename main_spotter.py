@@ -104,7 +104,7 @@ def detect_weather_elements(image_path, debug=False):
     
     # Connect X markers to L/H systems
     connection_img = result_img.copy()
-    updated_l_markers, updated_h_markers, _ = connect_x_markers_to_lh(x_markers, l_markers, h_markers, connection_img)
+    updated_l_markers, updated_h_markers, debug_img = connect_x_markers_to_lh(x_markers, l_markers, h_markers, connection_img)
     
     # Format output data
     output_data = format_output_data(l_markers, h_markers, mask_name)

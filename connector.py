@@ -96,7 +96,7 @@ def get_valid_x_markers(x_markers, l_markers, h_markers):
             y_coords = [point[0][1] for point in rect_points]
             x_min, x_max = min(x_coords), max(x_coords)
             y_min, y_max = min(y_coords), max(y_coords)
-            boxes.append((x_min-3, y_min-3, x_max+3, y_max+3))
+            boxes.append((x_min, y_min, x_max, y_max))
         
         # Marker rectangular points box
         if 'marker_rect_points' in marker:
@@ -105,7 +105,7 @@ def get_valid_x_markers(x_markers, l_markers, h_markers):
             y_coords = [point[0][1] for point in rect_points]
             x_min, x_max = min(x_coords), max(x_coords)
             y_min, y_max = min(y_coords), max(y_coords)
-            boxes.append((x_min-3, y_min-3, x_max+3, y_max+3))
+            boxes.append((x_min, y_min, x_max, y_max))
     
     # Filter valid X markers
     valid_x_markers = []
@@ -178,7 +178,7 @@ def connect_x_markers_to_lh(x_markers, l_markers, h_markers, debug_img=None):
                 color = (0, 255, 0) if is_l_system else (0, 0, 255)
                 cv2.line(debug_img, x_marker['position'], target_marker['position'], color, 1, cv2.LINE_AA)
     
-    return l_markers_updated, h_markers_updated, connected_x_markers
+    return l_markers_updated, h_markers_updated, connected_x_markers,
 
 
 def create_connection_image(img, l_markers, h_markers, x_markers):
