@@ -156,7 +156,7 @@ def contrast_enhanced(gray):
     _, mask = cv2.threshold(enhanced, 220, 255, cv2.THRESH_BINARY)
     return mask
 
-def process_image(image_path, output_folder, base_filename):
+def process_image(image_path, output_folder, base_filename, rel_path=""):
     """
     Process a single image: extract timestamp and create mask
     
@@ -164,6 +164,7 @@ def process_image(image_path, output_folder, base_filename):
         image_path: Path to input image
         output_folder: Folder to save processed mask
         base_filename: Original filename
+        rel_path: Relative subdirectory path to maintain structure
         
     Returns:
         bool: True if processing successful, False otherwise
@@ -187,9 +188,14 @@ def process_image(image_path, output_folder, base_filename):
     
     try:
         mask = contrast_enhanced(gray)
-        output_path = os.path.join(output_folder, output_filename)
+        
+        # Create subdirectory in output if it doesn't exist
+        subdir_path = os.path.join(output_folder, rel_path)
+        os.makedirs(subdir_path, exist_ok=True)
+        
+        output_path = os.path.join(subdir_path, output_filename)
         cv2.imwrite(output_path, mask)
-        print(f"  - Saved as: {output_filename}")
+        print(f"  - Saved as: {os.path.join(rel_path, output_filename)}")
     except Exception as e:
         print(f"  - Error processing image: {e}")
         return False
@@ -198,36 +204,47 @@ def process_image(image_path, output_folder, base_filename):
 
 def process_maps_folder(input_folder, output_folder):
     """
-    Process all images in a folder
+    Process all images in a folder and its subdirectories
     
     Args:
         input_folder: Folder containing input images
         output_folder: Folder to save processed masks
     """
     os.makedirs(output_folder, exist_ok=True)
-    files = os.listdir(input_folder)
-    
-    # Filter image files
-    image_files = [f for f in files if not f.startswith('.') and 
-                  f.lower().endswith(('.gif', '.jpg', '.jpeg', '.png'))]
     
     success_count = 0
     fail_count = 0
+    total_files = 0
     
-    print(f"Found {len(image_files)} image files in {input_folder}")
-    
-    for filename in image_files:
-        input_path = os.path.join(input_folder, filename)
-        name_without_ext = os.path.splitext(filename)[0]
+    # Walk through all subdirectories
+    for root, _, files in os.walk(input_folder):
+        # Compute relative path to maintain directory structure
+        rel_path = os.path.relpath(root, input_folder)
+        if rel_path == '.':
+            rel_path = ""
         
-        print(f"\nProcessing: {filename}")
+        # Filter image files
+        image_files = [f for f in files if not f.startswith('.') and 
+                      f.lower().endswith(('.gif', '.jpg', '.jpeg', '.png'))]
         
-        if process_image(input_path, output_folder, name_without_ext):
-            success_count += 1
-        else:
-            fail_count += 1
+        total_files += len(image_files)
+        
+        if image_files:
+            print(f"\nFound {len(image_files)} image files in {root}")
+        
+        for filename in image_files:
+            input_path = os.path.join(root, filename)
+            name_without_ext = os.path.splitext(filename)[0]
+            
+            print(f"\nProcessing: {os.path.join(rel_path, filename)}")
+            
+            if process_image(input_path, output_folder, name_without_ext, rel_path):
+                success_count += 1
+            else:
+                fail_count += 1
     
     print(f"\nProcessing complete:")
+    print(f"  - Total images found: {total_files}")
     print(f"  - Successfully processed: {success_count} images")
     print(f"  - Failed to process: {fail_count} images")
     print(f"  - Masks saved to: {output_folder}")
