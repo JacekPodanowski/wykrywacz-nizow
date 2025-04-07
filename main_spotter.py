@@ -11,7 +11,7 @@ from LH_spotter import detect_lh_markers, format_output_data
 from connector import connect_x_markers_to_lh, create_connection_image, update_output_data
 
 # Define version
-__version__ = '1.3.0'
+__version__ = '1.4.0'
 
 def parse_filename_date(filename):
     """Extract date, month, and time from filename."""
@@ -131,16 +131,19 @@ def detect_weather_elements(image_path, debug=False):
     return result_img, updated_output_data, debug_img, date_info, x_markers
 
 def main():
-    """Process mask images in a folder."""
+    """Process mask images in a folder and its subdirectories."""
     parser = argparse.ArgumentParser(description='Weather System Spotter')
     parser.add_argument('--debug', action='store_true', help='Enable debug mode')
+    parser.add_argument('--masks', type=str, default='masks', help='Path to the masks directory')
+    parser.add_argument('--output', type=str, default='results', help='Path to the output directory')
+    parser.add_argument('--debug-dir', type=str, default='debug', help='Path to the debug directory')
     args = parser.parse_args()
 
     print(f"Weather System Spotter v{__version__}")
     
-    masks_folder = 'masks'
-    output_folder = 'results'
-    debug_folder = 'debug'
+    masks_folder = args.masks
+    output_folder = args.output
+    debug_folder = args.debug_dir
     
     # Create necessary folders
     for folder in [output_folder, debug_folder]:
@@ -151,27 +154,53 @@ def main():
         print(f"Error: Masks folder '{masks_folder}' not found")
         return
     
-    mask_files = [f for f in os.listdir(masks_folder) if f.lower().endswith(('.jpg', '.jpeg', '.png'))]
+    # Find all mask files in the main folder and all subdirectories
+    mask_files = []
+    total_masks = 0
+    
+    for root, _, files in os.walk(masks_folder):
+        rel_path = os.path.relpath(root, masks_folder)
+        mask_images = [f for f in files if f.lower().endswith(('.jpg', '.jpeg', '.png'))]
+        total_masks += len(mask_images)
+        
+        if mask_images:
+            print(f"Found {len(mask_images)} mask files in {root}")
+            for mask_file in mask_images:
+                mask_files.append({
+                    'path': os.path.join(root, mask_file),
+                    'rel_path': os.path.join(rel_path, mask_file) if rel_path != '.' else mask_file
+                })
     
     if not mask_files:
-        print(f"No image files found in '{masks_folder}' folder")
+        print(f"No image files found in '{masks_folder}' folder or its subdirectories")
         return
     
-    print(f"Found {len(mask_files)} mask files to process")
+    print(f"Found a total of {total_masks} mask files to process")
     
     # Prepare CSV for output
     csv_path = os.path.join(output_folder, 'weather_systems.csv')
     csv_headers = ['day', 'month', 'hour', 'x', 'y', 'type', 'pressure']
     
+    processed_count = 0
+    error_count = 0
+    
     with open(csv_path, 'w', newline='') as csvfile:
         csv_writer = csv.writer(csvfile)
         csv_writer.writerow(csv_headers)
         
-        for i, mask_file in enumerate(mask_files):
-            mask_path = os.path.join(masks_folder, mask_file)
-            mask_name = os.path.splitext(mask_file)[0]
+        for i, mask_info in enumerate(mask_files):
+            mask_path = mask_info['path']
+            rel_file_path = mask_info['rel_path']
+            mask_name = os.path.splitext(os.path.basename(mask_path))[0]
             
-            print(f"\nProcessing mask [{i+1}/{len(mask_files)}]: {mask_file}")
+            # Create subdirectory structure in output and debug folders if needed
+            rel_dir = os.path.dirname(rel_file_path)
+            if rel_dir:
+                os.makedirs(os.path.join(output_folder, rel_dir), exist_ok=True)
+                if args.debug:
+                    os.makedirs(os.path.join(debug_folder, rel_dir), exist_ok=True)
+            
+            print(f"\nProcessing mask [{i+1}/{len(mask_files)}]: {rel_file_path}")
             
             try:
                 result_img, output_data, debug_img, date_info, x_markers = detect_weather_elements(mask_path, debug=args.debug)
@@ -199,20 +228,29 @@ def main():
                             
                 # Save debug images if debug mode is on
                 if args.debug:
-                    result_path = os.path.join(output_folder, f"{mask_name}_result.jpg")
-                    cv2.imwrite(result_path, result_img)
+                    if rel_dir:
+                        result_path = os.path.join(output_folder, rel_dir, f"{mask_name}_result.jpg")
+                        debug_path = os.path.join(debug_folder, rel_dir, f"{mask_name}_debug.jpg")
+                    else:
+                        result_path = os.path.join(output_folder, f"{mask_name}_result.jpg")
+                        debug_path = os.path.join(debug_folder, f"{mask_name}_debug.jpg")
                     
-                    debug_path = os.path.join(debug_folder, f"{mask_name}_debug.jpg")
+                    cv2.imwrite(result_path, result_img)
                     cv2.imwrite(debug_path, debug_img)
                 
-                print(f"  Processed: {mask_file}")
+                print(f"  Processed: {rel_file_path}")
+                processed_count += 1
                 
             except Exception as e:
-                print(f"  Error processing mask {mask_file}: {e}")
+                print(f"  Error processing mask {rel_file_path}: {e}")
                 import traceback
                 traceback.print_exc()
+                error_count += 1
     
-    print(f"\nProcessing complete! Results saved to {csv_path}")
+    print(f"\nProcessing complete!")
+    print(f"  - Total masks processed: {processed_count}")
+    print(f"  - Total errors: {error_count}")
+    print(f"  - Results saved to {csv_path}")
 
 if __name__ == "__main__":
     try:
