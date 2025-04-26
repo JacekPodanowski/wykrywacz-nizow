@@ -30,10 +30,7 @@ def detect_lh_markers(img, header_mask=None):
     # Apply header mask if provided
     masked_thresh = cv2.bitwise_and(thresh, thresh, mask=header_mask) if header_mask is not None else thresh
     
-    # Create debug image
     debug_img = img.copy()
-    
-    # Initialize result containers
     l_markers = []
     h_markers = []
     pressure_values = []
@@ -73,7 +70,6 @@ def detect_lh_markers(img, header_mask=None):
                 # Draw orange rectangle around pressure value
                 cv2.polylines(debug_img, [rect_points], True, (0, 165, 255), 2)
                 
-                # Print detected value
                 print(f"Detected pressure value {value} at position ({center_x}, {center_y})")
     except Exception as e:
         print(f"Error detecting pressure values: {e}")
@@ -269,7 +265,7 @@ def format_output_data(l_markers, h_markers, filename):
             'pressure_position': pressure_position,
             'pattern_analyzed': l_marker.get('pattern_analyzed', False),
             'prob': float(l_marker.get('prob', 0.5)),
-            'x_points': []  # Empty list since we're not handling X markers
+            'x_points': []
         }
         output_data['l_systems'].append(convert_to_serializable(l_system))
     
@@ -290,7 +286,7 @@ def format_output_data(l_markers, h_markers, filename):
             'pressure_position': pressure_position,
             'pattern_analyzed': h_marker.get('pattern_analyzed', False),
             'prob': float(h_marker.get('prob', 0.5)),
-            'x_points': []  # Empty list since we're not handling X markers
+            'x_points': [] 
         }
         output_data['h_systems'].append(convert_to_serializable(h_system))
     

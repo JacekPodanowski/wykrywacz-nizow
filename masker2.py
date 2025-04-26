@@ -5,7 +5,7 @@ import re
 from PIL import Image
 import easyocr
 
-# Global variable for EasyOCR reader to avoid initializing multiple times
+# Global variable for EasyOCR reader
 ocr_reader = None
 
 def get_ocr_reader():

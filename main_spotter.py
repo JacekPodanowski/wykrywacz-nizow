@@ -10,9 +10,6 @@ from x_spotter import detect_x_markers, detect_small_connected_components, find_
 from LH_spotter import detect_lh_markers, format_output_data
 from connector import connect_x_markers_to_lh, create_connection_image, update_output_data
 
-# Define version
-__version__ = '1.4.0'
-
 def parse_filename_date(filename):
     """Extract date, month, and time from filename."""
     try:
@@ -139,7 +136,7 @@ def main():
     parser.add_argument('--debug-dir', type=str, default='debug', help='Path to the debug directory')
     args = parser.parse_args()
 
-    print(f"Weather System Spotter v{__version__}")
+    print(f"Weather System Spotter")
     
     masks_folder = args.masks
     output_folder = args.output

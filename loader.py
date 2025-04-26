@@ -271,7 +271,6 @@ def main():
     # URL of the MetOffice digital archive
     base_url = "https://digital.nmla.metoffice.gov.uk/SO_3c7b44de-30b9-4fec-a385-13326c17aada/"
     
-    # Create and run the scraper
     try:
         scraper = MetOfficeScraper(base_url)
         scraper.download_all_maps()

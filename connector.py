@@ -34,7 +34,7 @@ def consolidate_x_markers(x_markers, max_distance=10):
     if not x_markers:
         return []
     
-    # Sort markers by x position to make consolidation more efficient
+    # Sort markers by x position
     sorted_markers = sorted(x_markers, key=lambda x: x['position'][0])
     
     consolidated_markers = []
@@ -53,7 +53,6 @@ def consolidate_x_markers(x_markers, max_distance=10):
         else:
             # Consolidate the current group to its center
             if current_group:
-                # Calculate average position
                 avg_x = int(sum(m['position'][0] for m in current_group) / len(current_group))
                 avg_y = int(sum(m['position'][1] for m in current_group) / len(current_group))
                 
@@ -69,7 +68,6 @@ def consolidate_x_markers(x_markers, max_distance=10):
     
     # Handle the last group
     if current_group:
-        # Calculate average position
         avg_x = int(sum(m['position'][0] for m in current_group) / len(current_group))
         avg_y = int(sum(m['position'][1] for m in current_group) / len(current_group))
         
@@ -83,7 +81,6 @@ def consolidate_x_markers(x_markers, max_distance=10):
     return consolidated_markers
 
 def get_valid_x_markers(x_markers, l_markers, h_markers):
-    # First, consolidate x markers
     consolidated_x_markers = consolidate_x_markers(x_markers)
     boxes = []
     
@@ -130,12 +127,10 @@ def connect_x_markers_to_lh(x_markers, l_markers, h_markers, debug_img=None):
     h_markers_updated = [dict(marker) for marker in h_markers]
     connected_x_markers = []
     
-    # Dodajemy pole "associated_x" do każdego markera L i H
     for marker in l_markers_updated + h_markers_updated:
         marker['associated_x'] = []
-        marker['assigned'] = False  # Flaga, czy już przypisano x_marker
+        marker['assigned'] = False
     
-    # Tworzymy listę z możliwymi połączeniami: (x_marker, marker, distance, is_l_system)
     possible_connections = []
     
     for x_marker in valid_x_markers:
@@ -153,7 +148,7 @@ def connect_x_markers_to_lh(x_markers, l_markers, h_markers, debug_img=None):
             if dist <= MAX_X_TO_LH_DISTANCE:
                 possible_connections.append((x_marker, h_marker, dist, False))
     
-    # Sortujemy połączenia po najmniejszej odległości
+    # Sort by distance
     possible_connections.sort(key=lambda item: item[2])
     
     used_x_markers = set()
@@ -162,7 +157,7 @@ def connect_x_markers_to_lh(x_markers, l_markers, h_markers, debug_img=None):
         x_id = id(x_marker)
         target_id = id(target_marker)
         
-        # Jeśli x_marker nie został jeszcze użyty i target nie jest przypisany
+        # If x is not used yet
         if x_id not in used_x_markers and not target_marker['assigned']:
             connected_x = x_marker.copy()
             connected_x['associated_to'] = target_marker['position']
